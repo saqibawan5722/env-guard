@@ -7,12 +7,6 @@ describe('Secrets & Security Analyzer', () => {
     assert.strictEqual(res.severity, 'CRITICAL');
   });
 
-  // test('should detect Stripe Live Secret Key pattern', () => {
-  //   const res = checkSecret('STRIPE_KEY', 'sk_live_1234567890abcdef12345678');
-  //   assert.ok(res, 'Should flag Stripe key');
-  //   assert.strictEqual(res.severity, 'CRITICAL');
-  // });
-
   test('should ignore obvious placeholders', () => {
     assert.ok(isPlaceholder('your_secret_key_here'));
     assert.ok(isPlaceholder('<change-me>'));
