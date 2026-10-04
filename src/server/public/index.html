@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Env-Guard | Environment Drift & Security Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">🛡️</div>
+        <div class="brand-text">
+          <span class="brand-title">Env-Guard</span>
+          <span class="brand-badge">PRO</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" data-tab="overview">
+          <span class="nav-icon">📊</span>
+          <span>Overview</span>
+        </button>
+        <button class="nav-item" data-tab="matrix">
+          <span class="nav-icon">🌐</span>
+          <span>Drift Matrix</span>
+          <span class="nav-counter" id="matrixCount">0</span>
+        </button>
+        <button class="nav-item" data-tab="missing">
+          <span class="nav-icon">❌</span>
+          <span>Missing Keys</span>
+          <span class="nav-counter danger" id="missingCount">0</span>
+        </button>
+        <button class="nav-item" data-tab="secrets">
+          <span class="nav-icon">🔒</span>
+          <span>Secret Leaks</span>
+          <span class="nav-counter warning" id="secretsCount">0</span>
+        </button>
+        <button class="nav-item" data-tab="ast">
+          <span class="nav-icon">🔍</span>
+          <span>Code AST Scan</span>
+          <span class="nav-counter" id="astCount">0</span>
+        </button>
+        <button class="nav-item" data-tab="editor">
+          <span class="nav-icon">📝</span>
+          <span>Env Editor</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="footer-status">
+          <span class="pulse-indicator"></span>
+          <span id="liveStatusText">Live Scanning Active</span>
+        </div>
+        <button class="btn btn-secondary btn-sm btn-block" id="refreshAuditBtn">
+          🔄 Re-scan Project
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Bar -->
+      <header class="top-bar">
+        <div class="header-path">
+          <span class="path-label">Target Directory:</span>
+          <code class="path-value" id="currentDirPath">Loading...</code>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-outline" id="exportMdBtn">📥 Markdown</button>
+          <button class="btn btn-outline" id="exportJsonBtn">📦 JSON</button>
+          <button class="btn btn-primary" id="openSyncModalBtn">✨ Auto-Sync All</button>
+        </div>
+      </header>
+
+      <div class="content-body">
+        <!-- TAB 1: OVERVIEW -->
+        <section class="tab-pane active" id="pane-overview">
+          <div class="hero-banner">
+            <div class="hero-left">
+              <h2 class="hero-title">Environment Drift & Health Status</h2>
+              <p class="hero-desc">
+                AST scanned your codebase for missing environment variables, dead keys, and exposed secret tokens.
+              </p>
+              <div class="hero-meta" id="lastScannedTime">Scanned just now</div>
+            </div>
+            <div class="hero-right">
+              <div class="score-circle" id="scoreCircle">
+                <svg viewBox="0 0 100 100" class="circular-chart">
+                  <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <path class="circle" id="scoreProgress" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+                <div class="score-text">
+                  <span class="score-num" id="healthScoreNum">100%</span>
+                  <span class="score-label">HEALTH</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Stats Cards -->
+          <div class="stats-cards-grid">
+            <div class="stat-card">
+              <div class="stat-icon icon-code">🔍</div>
+              <div class="stat-info">
+                <div class="stat-num" id="statCodeKeys">0</div>
+                <div class="stat-label">Code Variables Used</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon icon-danger">❌</div>
+              <div class="stat-info">
+                <div class="stat-num text-danger" id="statMissing">0</div>
+                <div class="stat-label">Missing in .env</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon icon-warning">🔒</div>
+              <div class="stat-info">
+                <div class="stat-num text-warning" id="statSecrets">0</div>
+                <div class="stat-label">Secret Leaks Detected</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon icon-files">📁</div>
+              <div class="stat-info">
+                <div class="stat-num" id="statEnvFiles">0</div>
+                <div class="stat-label">Discovered .env Files</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Overview Sections -->
+          <div class="overview-split">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">🚨 Urgent Attention Needed</h3>
+              </div>
+              <div class="card-body" id="urgentIssuesList">
+                <div class="empty-state">Loading audit details...</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">📂 Environment Files Tracked</h3>
+              </div>
+              <div class="card-body" id="envFilesList">
+                <!-- Discovered env files -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 2: DRIFT MATRIX -->
+        <section class="tab-pane" id="pane-matrix">
+          <div class="card">
+            <div class="card-header flex-between">
+              <div>
+                <h3 class="card-title">Cross-Environment Comparison Matrix</h3>
+                <p class="card-subtitle">Complete variable presence mapping between Code AST and each .env file</p>
+              </div>
+              <div class="search-box">
+                <input type="text" id="matrixSearchInput" placeholder="Filter variables..." />
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table" id="matrixFullTable">
+                <thead></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 3: MISSING & DEAD KEYS -->
+        <section class="tab-pane" id="pane-missing">
+          <div class="card mb-4">
+            <div class="card-header flex-between">
+              <div>
+                <h3 class="card-title">❌ Missing in .env (Runtime Crash Risk)</h3>
+                <p class="card-subtitle">These variables are actively referenced in your code AST but are missing from .env</p>
+              </div>
+              <button class="btn btn-primary btn-sm" id="fixAllMissingBtn">⚡ Fix & Scaffold All</button>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table" id="missingTableFull">
+                <thead>
+                  <tr>
+                    <th>Variable</th>
+                    <th>Inferred Type</th>
+                    <th>Suggested Value</th>
+                    <th>Referenced Files</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">🧟 Dead / Zombie Variables</h3>
+              <p class="card-subtitle">Present in .env but never referenced in code or .env.example</p>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table" id="deadTableFull">
+                <thead>
+                  <tr>
+                    <th>Variable</th>
+                    <th>Line in .env</th>
+                    <th>Current Value</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 4: SECRETS SCANNER -->
+        <section class="tab-pane" id="pane-secrets">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">🔒 Secrets & Sensitive Credential Scanner</h3>
+              <p class="card-subtitle">Detects live API keys, JWT tokens, database passwords, and high-entropy secrets</p>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table" id="secretsTableFull">
+                <thead>
+                  <tr>
+                    <th>File</th>
+                    <th>Line</th>
+                    <th>Variable</th>
+                    <th>Matched Pattern</th>
+                    <th>Severity</th>
+                    <th>Masked Value</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 5: CODE AST SCAN -->
+        <section class="tab-pane" id="pane-ast">
+          <div class="card">
+            <div class="card-header flex-between">
+              <div>
+                <h3 class="card-title">🔍 Code AST Occurrences Explorer</h3>
+                <p class="card-subtitle">All process.env, import.meta.env, os.environ & os.Getenv found in codebase</p>
+              </div>
+              <div class="search-box">
+                <input type="text" id="astSearchInput" placeholder="Search keys or files..." />
+              </div>
+            </div>
+            <div class="ast-explorer-container" id="astExplorerList">
+              <!-- Rendered AST tree -->
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 6: ENV FILE EDITOR -->
+        <section class="tab-pane" id="pane-editor">
+          <div class="card">
+            <div class="card-header flex-between">
+              <div class="file-tabs-bar" id="editorTabsBar">
+                <!-- Env file tabs -->
+              </div>
+              <button class="btn btn-primary btn-sm" id="saveEditorBtn">💾 Save Changes</button>
+            </div>
+            <div class="editor-wrapper">
+              <textarea id="envCodeEditor" spellcheck="false" placeholder="Select an environment file to edit..."></textarea>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Sync Modal -->
+  <div class="modal-overlay" id="syncModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">✨ Synchronize Environment Variables</h3>
+        <button class="modal-close" id="closeSyncModalBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">
+          Select target file and review values to automatically append to your environment configuration:
+        </p>
+        <div class="form-group">
+          <label>Target File:</label>
+          <select id="modalTargetFileSelect" class="form-select">
+            <option value=".env">.env (Local Environment)</option>
+            <option value=".env.example">.env.example (Team Onboarding)</option>
+          </select>
+        </div>
+        <div class="sync-items-list" id="modalSyncList">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelSyncBtn">Cancel</button>
+        <button class="btn btn-primary" id="confirmSyncBtn">🚀 Apply Sync</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

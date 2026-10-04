@@ -1,0 +1,41 @@
+{
+  "name": "env-guard",
+  "version": "1.0.0",
+  "description": "Zero-Dependency Environment Drift Detector & Multi-Environment Sync Engine with Express Web Dashboard",
+  "main": "src/index.js",
+  "bin": {
+    "env-guard": "./bin/env-guard.js"
+  },
+  "keywords": [
+    "dotenv",
+    "env",
+    "environment-variables",
+    "drift-detection",
+    "ast-scanner",
+    "cli",
+    "express",
+    "devops",
+    "security",
+    "secret-scanner",
+    "linter"
+  ],
+  "author": "Saqib Ali",
+  "license": "MIT",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node bin/env-guard.js ui",
+    "cli": "node bin/env-guard.js",
+    "audit": "node bin/env-guard.js audit",
+    "scan": "node bin/env-guard.js scan",
+    "sync": "node bin/env-guard.js sync",
+    "ui": "node bin/env-guard.js ui",
+    "test": "node test/run-all.js",
+    "demo": "node bin/env-guard.js audit --dir ./demo-fixtures"
+  },
+  "dependencies": {
+    "express": "^4.22.3"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

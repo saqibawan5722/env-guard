@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Env-Guard Audit Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(18, 24, 38, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --primary: #6366f1;
+      --primary-glow: rgba(99, 102, 241, 0.35);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --accent: #8b5cf6;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.12) 0px, transparent 50%);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      padding: 2.5rem 1.5rem;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .logo-area { display: flex; align-items: center; gap: 1rem; }
+    .shield-icon {
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      box-shadow: 0 0 25px var(--primary-glow);
+    }
+    h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; }
+    .subtitle { color: var(--text-muted); font-size: 0.9rem; margin-top: 2px; }
+    .badge {
+      padding: 0.4rem 0.9rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+    }
+    .badge-pass { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-fail { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.4rem;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-3px); border-color: rgba(99, 102, 241, 0.3); }
+    .stat-title { font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+    .stat-val { font-size: 2.2rem; font-weight: 800; margin-top: 0.4rem; }
+    .stat-meta { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem; }
+    
+    .section-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 1.75rem;
+      margin-bottom: 2rem;
+    }
+    .section-header {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;
+    }
+    .section-title { font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 0.6rem; }
+
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th {
+      padding: 0.85rem 1rem;
+      background: rgba(255, 255, 255, 0.03);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    td {
+      padding: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      font-size: 0.9rem;
+    }
+    tr:hover td { background: rgba(255, 255, 255, 0.02); }
+    .mono { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
+    .key-badge {
+      background: rgba(99, 102, 241, 0.12);
+      color: #a5b4fc;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+    }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .dot-yes { background: var(--success); box-shadow: 0 0 8px rgba(16, 185, 129, 0.6); }
+    .dot-no { background: var(--danger); opacity: 0.4; }
+    .code-box {
+      background: #0d111a;
+      border-radius: 8px;
+      padding: 0.6rem 0.8rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: #94a3b8;
+      max-height: 120px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo-area">
+        <div class="shield-icon">🛡️</div>
+        <div>
+          <h1>Env-Guard Audit Report</h1>
+          <div class="subtitle" id="scanInfo">Project Environment Drift & Health Audit</div>
+        </div>
+      </div>
+      <div id="statusBadge"></div>
+    </header>
+
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <div class="section-card" id="missingSection">
+      <div class="section-header">
+        <div class="section-title">❌ Missing in .env (Used in Code)</div>
+      </div>
+      <div style="overflow-x: auto;">
+        <table id="missingTable">
+          <thead>
+            <tr>
+              <th>Variable Key</th>
+              <th>Type</th>
+              <th>Suggested Default</th>
+              <th>Code Occurrences</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section-card" id="secretsSection">
+      <div class="section-header">
+        <div class="section-title">🔒 Secret Leaks & High Risk Keys</div>
+      </div>
+      <div style="overflow-x: auto;">
+        <table id="secretsTable">
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Line</th>
+              <th>Variable</th>
+              <th>Detected Pattern</th>
+              <th>Severity</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title">🌐 Multi-Environment Drift Matrix</div>
+      </div>
+      <div style="overflow-x: auto;">
+        <table id="matrixTable">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const reportData = {"projectDir":"C:\\Users\\saqib.ali\\Desktop\\Env-Guard\\demo-fixtures","scannedAt":"2026-10-02T14:50:24.333Z","isPassing":false,"healthScore":0,"summary":{"totalFilesScanned":4,"codeKeysCount":13,"envFilesFound":3,"missingInEnvCount":11,"missingInExampleCount":12,"deadInEnvCount":3,"secretsCount":5,"criticalSecretsCount":4},"codeScan":{"totalFilesScanned":4,"uniqueKeys":["AUTH_PROVIDER","DATABASE_URL","DOCKER_BUILD_ID","EXTERNAL_PAYMENT_API_KEY","FRONTEND_URL","JWT_SECRET","NODE_ENV","PORT","QUEUE_NAME","REDIS_URL","SESSION_COOKIE_SECRET","STRIPE_SECRET_KEY","STRIPE_WEBHOOK_SECRET","WORKER_CONCURRENCY"],"keyOccurrences":{"NODE_ENV":[{"key":"NODE_ENV","file":"Dockerfile","line":6,"column":1,"snippet":"     5 | COPY . .\n\u003e    6 | ENV NODE_ENV=production\n     7 | ENV DOCKER_BUILD_ID=102","language":"Dockerfile / Docker Compose / Shell"}],"DOCKER_BUILD_ID":[{"key":"DOCKER_BUILD_ID","file":"Dockerfile","line":7,"column":1,"snippet":"     6 | ENV NODE_ENV=production\n\u003e    7 | ENV DOCKER_BUILD_ID=102\n     8 | EXPOSE 3000","language":"Dockerfile / Docker Compose / Shell"}],"QUEUE_NAME":[{"key":"QUEUE_NAME","file":"scripts/worker.py","line":4,"column":18,"snippet":"     3 | def start_worker():\n\u003e    4 |     queue_name = os.environ.get('QUEUE_NAME', 'default')\n     5 |     concurrency = int(os.getenv('WORKER_CONCURRENCY', '4'))","language":"Python (os.environ, os.getenv)"}],"WORKER_CONCURRENCY":[{"key":"WORKER_CONCURRENCY","file":"scripts/worker.py","line":5,"column":23,"snippet":"     4 |     queue_name = os.environ.get('QUEUE_NAME', 'default')\n\u003e    5 |     concurrency = int(os.getenv('WORKER_CONCURRENCY', '4'))\n     6 |     api_key = os.environ['EXTERNAL_PAYMENT_API_KEY']","language":"Python (os.environ, os.getenv)"}],"EXTERNAL_PAYMENT_API_KEY":[{"key":"EXTERNAL_PAYMENT_API_KEY","file":"scripts/worker.py","line":6,"column":15,"snippet":"     5 |     concurrency = int(os.getenv('WORKER_CONCURRENCY', '4'))\n\u003e    6 |     api_key = os.environ['EXTERNAL_PAYMENT_API_KEY']\n     7 |     print(f\"Worker listening on {queue_name} with concurrency {concurrency}\")","language":"Python (os.environ, os.getenv)"}],"AUTH_PROVIDER":[{"key":"AUTH_PROVIDER","file":"src/auth.ts","line":8,"column":15,"snippet":"     7 |   return {\n\u003e    8 |     provider: process.env.AUTH_PROVIDER || 'github',\n     9 |     cookieSecret: process.env['SESSION_COOKIE_SECRET'] || 'dev-secret'","language":"JavaScript/TypeScript (process.env.VAR)"}],"SESSION_COOKIE_SECRET":[{"key":"SESSION_COOKIE_SECRET","file":"src/auth.ts","line":9,"column":19,"snippet":"     8 |     provider: process.env.AUTH_PROVIDER || 'github',\n\u003e    9 |     cookieSecret: process.env['SESSION_COOKIE_SECRET'] || 'dev-secret'\n    10 |   };","language":"JavaScript/TypeScript (process.env.VAR)"}],"PORT":[{"key":"PORT","file":"src/server.js","line":4,"column":14,"snippet":"     3 | \n\u003e    4 | const PORT = process.env.PORT || 3000;\n     5 | const DB_URL = process.env.DATABASE_URL;","language":"JavaScript/TypeScript (process.env.VAR)"}],"DATABASE_URL":[{"key":"DATABASE_URL","file":"src/server.js","line":5,"column":16,"snippet":"     4 | const PORT = process.env.PORT || 3000;\n\u003e    5 | const DB_URL = process.env.DATABASE_URL;\n     6 | const REDIS = process.env.REDIS_URL;","language":"JavaScript/TypeScript (process.env.VAR)"}],"REDIS_URL":[{"key":"REDIS_URL","file":"src/server.js","line":6,"column":15,"snippet":"     5 | const DB_URL = process.env.DATABASE_URL;\n\u003e    6 | const REDIS = process.env.REDIS_URL;\n     7 | const JWT = process.env.JWT_SECRET;","language":"JavaScript/TypeScript (process.env.VAR)"}],"JWT_SECRET":[{"key":"JWT_SECRET","file":"src/server.js","line":7,"column":13,"snippet":"     6 | const REDIS = process.env.REDIS_URL;\n\u003e    7 | const JWT = process.env.JWT_SECRET;\n     8 | const STRIPE = process.env.STRIPE_SECRET_KEY;","language":"JavaScript/TypeScript (process.env.VAR)"}],"STRIPE_SECRET_KEY":[{"key":"STRIPE_SECRET_KEY","file":"src/server.js","line":8,"column":16,"snippet":"     7 | const JWT = process.env.JWT_SECRET;\n\u003e    8 | const STRIPE = process.env.STRIPE_SECRET_KEY;\n     9 | ","language":"JavaScript/TypeScript (process.env.VAR)"}],"STRIPE_WEBHOOK_SECRET":[{"key":"STRIPE_WEBHOOK_SECRET","file":"src/server.js","line":11,"column":9,"snippet":"    10 | // Destructuring test\n\u003e   11 | const { STRIPE_WEBHOOK_SECRET, FRONTEND_URL } = process.env;\n    12 | ","language":"JavaScript/TypeScript (Destructured)"}],"FRONTEND_URL":[{"key":"FRONTEND_URL","file":"src/server.js","line":11,"column":32,"snippet":"    10 | // Destructuring test\n\u003e   11 | const { STRIPE_WEBHOOK_SECRET, FRONTEND_URL } = process.env;\n    12 | ","language":"JavaScript/TypeScript (Destructured)"}]},"fileOccurrences":{"Dockerfile":[{"key":"NODE_ENV","file":"Dockerfile","line":6,"column":1,"snippet":"     5 | COPY . .\n\u003e    6 | ENV NODE_ENV=production\n     7 | ENV DOCKER_BUILD_ID=102","language":"Dockerfile / Docker Compose / Shell"},{"key":"DOCKER_BUILD_ID","file":"Dockerfile","line":7,"column":1,"snippet":"     6 | ENV NODE_ENV=production\n\u003e    7 | ENV DOCKER_BUILD_ID=102\n     8 | EXPOSE 3000","language":"Dockerfile / Docker Compose / Shell"}],"scripts/worker.py":[{"key":"QUEUE_NAME","file":"scripts/worker.py","line":4,"column":18,"snippet":"     3 | def start_worker():\n\u003e    4 |     queue_name = os.environ.get('QUEUE_NAME', 'default')\n     5 |     concurrency = int(os.getenv('WORKER_CONCURRENCY', '4'))","language":"Python (os.environ, os.getenv)"},{"key":"WORKER_CONCURRENCY","file":"scripts/worker.py","line":5,"column":23,"snippet":"     4 |     queue_name = os.environ.get('QUEUE_NAME', 'default')\n\u003e    5 |     concurrency = int(os.getenv('WORKER_CONCURRENCY', '4'))\n     6 |     api_key = os.environ['EXTERNAL_PAYMENT_API_KEY']","language":"Python (os.environ, os.getenv)"},{"key":"EXTERNAL_PAYMENT_API_KEY","file":"scripts/worker.py","line":6,"column":15,"snippet":"     5 |     concurrency = int(os.getenv('WORKER_CONCURRENCY', '4'))\n\u003e    6 |     api_key = os.environ['EXTERNAL_PAYMENT_API_KEY']\n     7 |     print(f\"Worker listening on {queue_name} with concurrency {concurrency}\")","language":"Python (os.environ, os.getenv)"}],"src/auth.ts":[{"key":"AUTH_PROVIDER","file":"src/auth.ts","line":8,"column":15,"snippet":"     7 |   return {\n\u003e    8 |     provider: process.env.AUTH_PROVIDER || 'github',\n     9 |     cookieSecret: process.env['SESSION_COOKIE_SECRET'] || 'dev-secret'","language":"JavaScript/TypeScript (process.env.VAR)"},{"key":"SESSION_COOKIE_SECRET","file":"src/auth.ts","line":9,"column":19,"snippet":"     8 |     provider: process.env.AUTH_PROVIDER || 'github',\n\u003e    9 |     cookieSecret: process.env['SESSION_COOKIE_SECRET'] || 'dev-secret'\n    10 |   };","language":"JavaScript/TypeScript (process.env.VAR)"}],"src/server.js":[{"key":"PORT","file":"src/server.js","line":4,"column":14,"snippet":"     3 | \n\u003e    4 | const PORT = process.env.PORT || 3000;\n     5 | const DB_URL = process.env.DATABASE_URL;","language":"JavaScript/TypeScript (process.env.VAR)"},{"key":"DATABASE_URL","file":"src/server.js","line":5,"column":16,"snippet":"     4 | const PORT = process.env.PORT || 3000;\n\u003e    5 | const DB_URL = process.env.DATABASE_URL;\n     6 | const REDIS = process.env.REDIS_URL;","language":"JavaScript/TypeScript (process.env.VAR)"},{"key":"REDIS_URL","file":"src/server.js","line":6,"column":15,"snippet":"     5 | const DB_URL = process.env.DATABASE_URL;\n\u003e    6 | const REDIS = process.env.REDIS_URL;\n     7 | const JWT = process.env.JWT_SECRET;","language":"JavaScript/TypeScript (process.env.VAR)"},{"key":"JWT_SECRET","file":"src/server.js","line":7,"column":13,"snippet":"     6 | const REDIS = process.env.REDIS_URL;\n\u003e    7 | const JWT = process.env.JWT_SECRET;\n     8 | const STRIPE = process.env.STRIPE_SECRET_KEY;","language":"JavaScript/TypeScript (process.env.VAR)"},{"key":"STRIPE_SECRET_KEY","file":"src/server.js","line":8,"column":16,"snippet":"     7 | const JWT = process.env.JWT_SECRET;\n\u003e    8 | const STRIPE = process.env.STRIPE_SECRET_KEY;\n     9 | ","language":"JavaScript/TypeScript (process.env.VAR)"},{"key":"STRIPE_WEBHOOK_SECRET","file":"src/server.js","line":11,"column":9,"snippet":"    10 | // Destructuring test\n\u003e   11 | const { STRIPE_WEBHOOK_SECRET, FRONTEND_URL } = process.env;\n    12 | ","language":"JavaScript/TypeScript (Destructured)"},{"key":"FRONTEND_URL","file":"src/server.js","line":11,"column":32,"snippet":"    10 | // Destructuring test\n\u003e   11 | const { STRIPE_WEBHOOK_SECRET, FRONTEND_URL } = process.env;\n    12 | ","language":"JavaScript/TypeScript (Destructured)"}]},"allOccurrences":[{"key":"NODE_ENV","file":"Dockerfile","line":6,"column":1,"snippet":"     5 | COPY . .\n\u003e    6 | ENV NODE_ENV=production\n     7 | ENV DOCKER_BUILD_ID=102","language":"Dockerfile / Docker Compose / Shell"},{"key":"DOCKER_BUILD_ID","file":"Dockerfile","line":7,"column":1,"snippet":"     6 | ENV NODE_ENV=production\n\u003e    7 | ENV DOCKER_BUILD_ID=102\n     8 | EXPOSE 3000","language":"Dockerfile / Docker Compose / Shell"},{"key":"QUEUE_NAME","file":"scripts/worker.py","line":4,"column":18,"snippet":"     3 | def start_worker():\n\u003e    4 |     queue_name = os.environ.get('QUEUE_NAME', 'default')\n     5 |     concurrency = int(os.getenv('WORKER_CONCURRENCY', '4'))","language":"Python (os.environ, os.getenv)"},{"key":"WORKER_CONCURRENCY","file":"scripts/worker.py","line":5,"column":23,"snippet":"     4 |     queue_name = os.environ.get('QUEUE_NAME', 'default')\n\u003e    5 |     concurrency = int(os.getenv('WORKER_CONCURRENCY', '4'))\n     6 |     api_key = os.environ['EXTERNAL_PAYMENT_API_KEY']","language":"Python (os.environ, os.getenv)"},{"key":"EXTERNAL_PAYMENT_API_KEY","file":"scripts/worker.py","line":6,"column":15,"snippet":"     5 |     concurrency = int(os.getenv('WORKER_CONCURRENCY', '4'))\n\u003e    6 |     api_key = os.environ['EXTERNAL_PAYMENT_API_KEY']\n     7 |     print(f\"Worker listening on {queue_name} with concurrency {concurrency}\")","language":"Python (os.environ, os.getenv)"},{"key":"AUTH_PROVIDER","file":"src/auth.ts","line":8,"column":15,"snippet":"     7 |   return {\n\u003e    8 |     provider: process.env.AUTH_PROVIDER || 'github',\n     9 |     cookieSecret: process.env['SESSION_COOKIE_SECRET'] || 'dev-secret'","language":"JavaScript/TypeScript (process.env.VAR)"},{"key":"SESSION_COOKIE_SECRET","file":"src/auth.ts","line":9,"column":19,"snippet":"     8 |     provider: process.env.AUTH_PROVIDER || 'github',\n\u003e    9 |     cookieSecret: process.env['SESSION_COOKIE_SECRET'] || 'dev-secret'\n    10 |   };","language":"JavaScript/TypeScript (process.env.VAR)"},{"key":"PORT","file":"src/server.js","line":4,"column":14,"snippet":"     3 | \n\u003e    4 | const PORT = process.env.PORT || 3000;\n     5 | const DB_URL = process.env.DATABASE_URL;","language":"JavaScript/TypeScript (process.env.VAR)"},{"key":"DATABASE_URL","file":"src/server.js","line":5,"column":16,"snippet":"     4 | const PORT = process.env.PORT || 3000;\n\u003e    5 | const DB_URL = process.env.DATABASE_URL;\n     6 | const REDIS = process.env.REDIS_URL;","language":"JavaScript/TypeScript (process.env.VAR)"},{"key":"REDIS_URL","file":"src/server.js","line":6,"column":15,"snippet":"     5 | const DB_URL = process.env.DATABASE_URL;\n\u003e    6 | const REDIS = process.env.REDIS_URL;\n     7 | const JWT = process.env.JWT_SECRET;","language":"JavaScript/TypeScript (process.env.VAR)"},{"key":"JWT_SECRET","file":"src/server.js","line":7,"column":13,"snippet":"     6 | const REDIS = process.env.REDIS_URL;\n\u003e    7 | const JWT = process.env.JWT_SECRET;\n     8 | const STRIPE = process.env.STRIPE_SECRET_KEY;","language":"JavaScript/TypeScript (process.env.VAR)"},{"key":"STRIPE_SECRET_KEY","file":"src/server.js","line":8,"column":16,"snippet":"     7 | const JWT = process.env.JWT_SECRET;\n\u003e    8 | const STRIPE = process.env.STRIPE_SECRET_KEY;\n     9 | ","language":"JavaScript/TypeScript (process.env.VAR)"},{"key":"STRIPE_WEBHOOK_SECRET","file":"src/server.js","line":11,"column":9,"snippet":"    10 | // Destructuring test\n\u003e   11 | const { STRIPE_WEBHOOK_SECRET, FRONTEND_URL } = process.env;\n    12 | ","language":"JavaScript/TypeScript (Destructured)"},{"key":"FRONTEND_URL","file":"src/server.js","line":11,"column":32,"snippet":"    10 | // Destructuring test\n\u003e   11 | const { STRIPE_WEBHOOK_SECRET, FRONTEND_URL } = process.env;\n    12 | ","language":"JavaScript/TypeScript (Destructured)"}],"scannedFiles":["Dockerfile","scripts/worker.py","src/auth.ts","src/server.js"]},"envFiles":[{"name":".env","filePath":"C:\\Users\\saqib.ali\\Desktop\\Env-Guard\\demo-fixtures\\.env","keysCount":6},{"name":".env.example","filePath":"C:\\Users\\saqib.ali\\Desktop\\Env-Guard\\demo-fixtures\\.env.example","keysCount":5},{"name":".env.production","filePath":"C:\\Users\\saqib.ali\\Desktop\\Env-Guard\\demo-fixtures\\.env.production","keysCount":6}],"missingInEnv":[{"key":"AUTH_PROVIDER","type":"STRING","defaultPlaceholder":"change_me","description":"Configuration Value","occurrences":[{"key":"AUTH_PROVIDER","file":"src/auth.ts","line":8,"column":15,"snippet":"     7 |   return {\n\u003e    8 |     provider: process.env.AUTH_PROVIDER || 'github',\n     9 |     cookieSecret: process.env['SESSION_COOKIE_SECRET'] || 'dev-secret'","language":"JavaScript/TypeScript (process.env.VAR)"}],"inExample":false},{"key":"DOCKER_BUILD_ID","type":"STRING","defaultPlaceholder":"change_me","description":"Configuration Value","occurrences":[{"key":"DOCKER_BUILD_ID","file":"Dockerfile","line":7,"column":1,"snippet":"     6 | ENV NODE_ENV=production\n\u003e    7 | ENV DOCKER_BUILD_ID=102\n     8 | EXPOSE 3000","language":"Dockerfile / Docker Compose / Shell"}],"inExample":false},{"key":"EXTERNAL_PAYMENT_API_KEY","type":"PAYMENT_KEY","defaultPlaceholder":"sk_test_your_stripe_key_here","description":"Payment Gateway Key","occurrences":[{"key":"EXTERNAL_PAYMENT_API_KEY","file":"scripts/worker.py","line":6,"column":15,"snippet":"     5 |     concurrency = int(os.getenv('WORKER_CONCURRENCY', '4'))\n\u003e    6 |     api_key = os.environ['EXTERNAL_PAYMENT_API_KEY']\n     7 |     print(f\"Worker listening on {queue_name} with concurrency {concurrency}\")","language":"Python (os.environ, os.getenv)"}],"inExample":false},{"key":"FRONTEND_URL","type":"URL","defaultPlaceholder":"http://localhost:3000","description":"Endpoint URL / Host","occurrences":[{"key":"FRONTEND_URL","file":"src/server.js","line":11,"column":32,"snippet":"    10 | // Destructuring test\n\u003e   11 | const { STRIPE_WEBHOOK_SECRET, FRONTEND_URL } = process.env;\n    12 | ","language":"JavaScript/TypeScript (Destructured)"}],"inExample":false},{"key":"JWT_SECRET","type":"SECRET","defaultPlaceholder":"your_super_secret_key_change_me","description":"Secret Token / Key","occurrences":[{"key":"JWT_SECRET","file":"src/server.js","line":7,"column":13,"snippet":"     6 | const REDIS = process.env.REDIS_URL;\n\u003e    7 | const JWT = process.env.JWT_SECRET;\n     8 | const STRIPE = process.env.STRIPE_SECRET_KEY;","language":"JavaScript/TypeScript (process.env.VAR)"}],"inExample":true},{"key":"QUEUE_NAME","type":"STRING","defaultPlaceholder":"change_me","description":"Configuration Value","occurrences":[{"key":"QUEUE_NAME","file":"scripts/worker.py","line":4,"column":18,"snippet":"     3 | def start_worker():\n\u003e    4 |     queue_name = os.environ.get('QUEUE_NAME', 'default')\n     5 |     concurrency = int(os.getenv('WORKER_CONCURRENCY', '4'))","language":"Python (os.environ, os.getenv)"}],"inExample":false},{"key":"REDIS_URL","type":"REDIS_URL","defaultPlaceholder":"redis://localhost:6379","description":"Redis Connection String","occurrences":[{"key":"REDIS_URL","file":"src/server.js","line":6,"column":15,"snippet":"     5 | const DB_URL = process.env.DATABASE_URL;\n\u003e    6 | const REDIS = process.env.REDIS_URL;\n     7 | const JWT = process.env.JWT_SECRET;","language":"JavaScript/TypeScript (process.env.VAR)"}],"inExample":true},{"key":"SESSION_COOKIE_SECRET","type":"SECRET","defaultPlaceholder":"your_super_secret_key_change_me","description":"Secret Token / Key","occurrences":[{"key":"SESSION_COOKIE_SECRET","file":"src/auth.ts","line":9,"column":19,"snippet":"     8 |     provider: process.env.AUTH_PROVIDER || 'github',\n\u003e    9 |     cookieSecret: process.env['SESSION_COOKIE_SECRET'] || 'dev-secret'\n    10 |   };","language":"JavaScript/TypeScript (process.env.VAR)"}],"inExample":false},{"key":"STRIPE_SECRET_KEY","type":"PAYMENT_KEY","defaultPlaceholder":"sk_test_your_stripe_key_here","description":"Payment Gateway Key","occurrences":[{"key":"STRIPE_SECRET_KEY","file":"src/server.js","line":8,"column":16,"snippet":"     7 | const JWT = process.env.JWT_SECRET;\n\u003e    8 | const STRIPE = process.env.STRIPE_SECRET_KEY;\n     9 | ","language":"JavaScript/TypeScript (process.env.VAR)"}],"inExample":false},{"key":"STRIPE_WEBHOOK_SECRET","type":"PAYMENT_KEY","defaultPlaceholder":"sk_test_your_stripe_key_here","description":"Payment Gateway Key","occurrences":[{"key":"STRIPE_WEBHOOK_SECRET","file":"src/server.js","line":11,"column":9,"snippet":"    10 | // Destructuring test\n\u003e   11 | const { STRIPE_WEBHOOK_SECRET, FRONTEND_URL } = process.env;\n    12 | ","language":"JavaScript/TypeScript (Destructured)"}],"inExample":false},{"key":"WORKER_CONCURRENCY","type":"STRING","defaultPlaceholder":"change_me","description":"Configuration Value","occurrences":[{"key":"WORKER_CONCURRENCY","file":"scripts/worker.py","line":5,"column":23,"snippet":"     4 |     queue_name = os.environ.get('QUEUE_NAME', 'default')\n\u003e    5 |     concurrency = int(os.getenv('WORKER_CONCURRENCY', '4'))\n     6 |     api_key = os.environ['EXTERNAL_PAYMENT_API_KEY']","language":"Python (os.environ, os.getenv)"}],"inExample":false}],"missingInExample":[{"key":"AUTH_PROVIDER","type":"STRING","defaultPlaceholder":"change_me","description":"Configuration Value","inCode":true,"inMainEnv":false,"occurrences":[{"key":"AUTH_PROVIDER","file":"src/auth.ts","line":8,"column":15,"snippet":"     7 |   return {\n\u003e    8 |     provider: process.env.AUTH_PROVIDER || 'github',\n     9 |     cookieSecret: process.env['SESSION_COOKIE_SECRET'] || 'dev-secret'","language":"JavaScript/TypeScript (process.env.VAR)"}]},{"key":"DOCKER_BUILD_ID","type":"STRING","defaultPlaceholder":"change_me","description":"Configuration Value","inCode":true,"inMainEnv":false,"occurrences":[{"key":"DOCKER_BUILD_ID","file":"Dockerfile","line":7,"column":1,"snippet":"     6 | ENV NODE_ENV=production\n\u003e    7 | ENV DOCKER_BUILD_ID=102\n     8 | EXPOSE 3000","language":"Dockerfile / Docker Compose / Shell"}]},{"key":"EXTERNAL_PAYMENT_API_KEY","type":"PAYMENT_KEY","defaultPlaceholder":"sk_test_your_stripe_key_here","description":"Payment Gateway Key","inCode":true,"inMainEnv":false,"occurrences":[{"key":"EXTERNAL_PAYMENT_API_KEY","file":"scripts/worker.py","line":6,"column":15,"snippet":"     5 |     concurrency = int(os.getenv('WORKER_CONCURRENCY', '4'))\n\u003e    6 |     api_key = os.environ['EXTERNAL_PAYMENT_API_KEY']\n     7 |     print(f\"Worker listening on {queue_name} with concurrency {concurrency}\")","language":"Python (os.environ, os.getenv)"}]},{"key":"FRONTEND_URL","type":"URL","defaultPlaceholder":"http://localhost:3000","description":"Endpoint URL / Host","inCode":true,"inMainEnv":false,"occurrences":[{"key":"FRONTEND_URL","file":"src/server.js","line":11,"column":32,"snippet":"    10 | // Destructuring test\n\u003e   11 | const { STRIPE_WEBHOOK_SECRET, FRONTEND_URL } = process.env;\n    12 | ","language":"JavaScript/TypeScript (Destructured)"}]},{"key":"QUEUE_NAME","type":"STRING","defaultPlaceholder":"change_me","description":"Configuration Value","inCode":true,"inMainEnv":false,"occurrences":[{"key":"QUEUE_NAME","file":"scripts/worker.py","line":4,"column":18,"snippet":"     3 | def start_worker():\n\u003e    4 |     queue_name = os.environ.get('QUEUE_NAME', 'default')\n     5 |     concurrency = int(os.getenv('WORKER_CONCURRENCY', '4'))","language":"Python (os.environ, os.getenv)"}]},{"key":"SESSION_COOKIE_SECRET","type":"SECRET","defaultPlaceholder":"your_super_secret_key_change_me","description":"Secret Token / Key","inCode":true,"inMainEnv":false,"occurrences":[{"key":"SESSION_COOKIE_SECRET","file":"src/auth.ts","line":9,"column":19,"snippet":"     8 |     provider: process.env.AUTH_PROVIDER || 'github',\n\u003e    9 |     cookieSecret: process.env['SESSION_COOKIE_SECRET'] || 'dev-secret'\n    10 |   };","language":"JavaScript/TypeScript (process.env.VAR)"}]},{"key":"STRIPE_SECRET_KEY","type":"PAYMENT_KEY","defaultPlaceholder":"sk_test_your_stripe_key_here","description":"Payment Gateway Key","inCode":true,"inMainEnv":false,"occurrences":[{"key":"STRIPE_SECRET_KEY","file":"src/server.js","line":8,"column":16,"snippet":"     7 | const JWT = process.env.JWT_SECRET;\n\u003e    8 | const STRIPE = process.env.STRIPE_SECRET_KEY;\n     9 | ","language":"JavaScript/TypeScript (process.env.VAR)"}]},{"key":"STRIPE_WEBHOOK_SECRET","type":"PAYMENT_KEY","defaultPlaceholder":"sk_test_your_stripe_key_here","description":"Payment Gateway Key","inCode":true,"inMainEnv":false,"occurrences":[{"key":"STRIPE_WEBHOOK_SECRET","file":"src/server.js","line":11,"column":9,"snippet":"    10 | // Destructuring test\n\u003e   11 | const { STRIPE_WEBHOOK_SECRET, FRONTEND_URL } = process.env;\n    12 | ","language":"JavaScript/TypeScript (Destructured)"}]},{"key":"WORKER_CONCURRENCY","type":"STRING","defaultPlaceholder":"change_me","description":"Configuration Value","inCode":true,"inMainEnv":false,"occurrences":[{"key":"WORKER_CONCURRENCY","file":"scripts/worker.py","line":5,"column":23,"snippet":"     4 |     queue_name = os.environ.get('QUEUE_NAME', 'default')\n\u003e    5 |     concurrency = int(os.getenv('WORKER_CONCURRENCY', '4'))\n     6 |     api_key = os.environ['EXTERNAL_PAYMENT_API_KEY']","language":"Python (os.environ, os.getenv)"}]},{"key":"AWS_ACCESS_KEY_ID","type":"STRING","defaultPlaceholder":"change_me","description":"Configuration Value","inCode":false,"inMainEnv":true,"occurrences":[]},{"key":"AWS_SECRET_ACCESS_KEY","type":"SECRET","defaultPlaceholder":"your_super_secret_key_change_me","description":"Secret Token / Key","inCode":false,"inMainEnv":true,"occurrences":[]},{"key":"LEGACY_ANALYTICS_KEY","type":"STRING","defaultPlaceholder":"change_me","description":"Configuration Value","inCode":false,"inMainEnv":true,"occurrences":[]}],"deadInEnv":[{"key":"AWS_ACCESS_KEY_ID","value":"AKIAIOSFODNN7EXAMPLE","line":6},{"key":"AWS_SECRET_ACCESS_KEY","value":"wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY","line":7},{"key":"LEGACY_ANALYTICS_KEY","value":"some_old_unused_value","line":10}],"secrets":[{"key":"AWS_ACCESS_KEY_ID","ruleName":"AWS Access Key ID","severity":"CRITICAL","maskedValue":"AKI...PLE","reason":"Matches pattern for AWS Access Key ID","file":".env","line":6},{"key":"AWS_SECRET_ACCESS_KEY","ruleName":"AWS Secret Access Key","severity":"CRITICAL","maskedValue":"wJa...KEY","reason":"Matches pattern for AWS Secret Access Key","file":".env","line":7},{"key":"DATABASE_URL","ruleName":"Database URL with Credentials","severity":"CRITICAL","maskedValue":"pos..._db","reason":"Matches pattern for Database URL with Credentials","file":".env.example","line":6},{"key":"JWT_SECRET","ruleName":"High-Entropy Secret String","severity":"WARNING","maskedValue":"pro...ere","reason":"Key \"JWT_SECRET\" contains high-entropy string (3.82 bits)","file":".env.production","line":4},{"key":"STRIPE_SECRET_KEY","ruleName":"Stripe Live Secret Key","severity":"CRITICAL","maskedValue":"sk_...234","reason":"Matches pattern for Stripe Live Secret Key","file":".env.production","line":6}],"matrix":[{"key":"AUTH_PROVIDER","inCode":true,"codeOccurrencesCount":1,"envPresence":{".env":{"present":false,"isSet":false,"valuePreview":""},".env.example":{"present":false,"isSet":false,"valuePreview":""},".env.production":{"present":false,"isSet":false,"valuePreview":""}}},{"key":"AWS_ACCESS_KEY_ID","inCode":false,"codeOccurrencesCount":0,"envPresence":{".env":{"present":true,"isSet":true,"valuePreview":"AKIAIOSFODNN7EXAMPLE"},".env.example":{"present":false,"isSet":false,"valuePreview":""},".env.production":{"present":false,"isSet":false,"valuePreview":""}}},{"key":"AWS_SECRET_ACCESS_KEY","inCode":false,"codeOccurrencesCount":0,"envPresence":{".env":{"present":true,"isSet":true,"valuePreview":"wJalrXUtnFEMI/K7M..."},".env.example":{"present":false,"isSet":false,"valuePreview":""},".env.production":{"present":false,"isSet":false,"valuePreview":""}}},{"key":"DATABASE_URL","inCode":true,"codeOccurrencesCount":1,"envPresence":{".env":{"present":true,"isSet":true,"valuePreview":"postgresql://loca..."},".env.example":{"present":true,"isSet":true,"valuePreview":"postgresql://post..."},".env.production":{"present":true,"isSet":true,"valuePreview":"postgresql://prod..."}}},{"key":"DOCKER_BUILD_ID","inCode":true,"codeOccurrencesCount":1,"envPresence":{".env":{"present":false,"isSet":false,"valuePreview":""},".env.example":{"present":false,"isSet":false,"valuePreview":""},".env.production":{"present":false,"isSet":false,"valuePreview":""}}},{"key":"EXTERNAL_PAYMENT_API_KEY","inCode":true,"codeOccurrencesCount":1,"envPresence":{".env":{"present":false,"isSet":false,"valuePreview":""},".env.example":{"present":false,"isSet":false,"valuePreview":""},".env.production":{"present":false,"isSet":false,"valuePreview":""}}},{"key":"FRONTEND_URL","inCode":true,"codeOccurrencesCount":1,"envPresence":{".env":{"present":false,"isSet":false,"valuePreview":""},".env.example":{"present":false,"isSet":false,"valuePreview":""},".env.production":{"present":false,"isSet":false,"valuePreview":""}}},{"key":"JWT_SECRET","inCode":true,"codeOccurrencesCount":1,"envPresence":{".env":{"present":false,"isSet":false,"valuePreview":""},".env.example":{"present":true,"isSet":true,"valuePreview":"your_super_secret..."},".env.production":{"present":true,"isSet":true,"valuePreview":"production_random..."}}},{"key":"LEGACY_ANALYTICS_KEY","inCode":false,"codeOccurrencesCount":0,"envPresence":{".env":{"present":true,"isSet":true,"valuePreview":"some_old_unused_v..."},".env.example":{"present":false,"isSet":false,"valuePreview":""},".env.production":{"present":false,"isSet":false,"valuePreview":""}}},{"key":"NODE_ENV","inCode":false,"codeOccurrencesCount":1,"envPresence":{".env":{"present":true,"isSet":true,"valuePreview":"development"},".env.example":{"present":true,"isSet":true,"valuePreview":"development"},".env.production":{"present":true,"isSet":true,"valuePreview":"production"}}},{"key":"PORT","inCode":true,"codeOccurrencesCount":1,"envPresence":{".env":{"present":true,"isSet":true,"valuePreview":"3000"},".env.example":{"present":true,"isSet":true,"valuePreview":"3000"},".env.production":{"present":true,"isSet":true,"valuePreview":"8080"}}},{"key":"QUEUE_NAME","inCode":true,"codeOccurrencesCount":1,"envPresence":{".env":{"present":false,"isSet":false,"valuePreview":""},".env.example":{"present":false,"isSet":false,"valuePreview":""},".env.production":{"present":false,"isSet":false,"valuePreview":""}}},{"key":"REDIS_URL","inCode":true,"codeOccurrencesCount":1,"envPresence":{".env":{"present":false,"isSet":false,"valuePreview":""},".env.example":{"present":true,"isSet":true,"valuePreview":"redis://localhost..."},".env.production":{"present":true,"isSet":true,"valuePreview":"redis://prod-redi..."}}},{"key":"SESSION_COOKIE_SECRET","inCode":true,"codeOccurrencesCount":1,"envPresence":{".env":{"present":false,"isSet":false,"valuePreview":""},".env.example":{"present":false,"isSet":false,"valuePreview":""},".env.production":{"present":false,"isSet":false,"valuePreview":""}}},{"key":"STRIPE_SECRET_KEY","inCode":true,"codeOccurrencesCount":1,"envPresence":{".env":{"present":false,"isSet":false,"valuePreview":""},".env.example":{"present":false,"isSet":false,"valuePreview":""},".env.production":{"present":true,"isSet":true,"valuePreview":"sk_live_dummyprod..."}}},{"key":"STRIPE_WEBHOOK_SECRET","inCode":true,"codeOccurrencesCount":1,"envPresence":{".env":{"present":false,"isSet":false,"valuePreview":""},".env.example":{"present":false,"isSet":false,"valuePreview":""},".env.production":{"present":false,"isSet":false,"valuePreview":""}}},{"key":"WORKER_CONCURRENCY","inCode":true,"codeOccurrencesCount":1,"envPresence":{".env":{"present":false,"isSet":false,"valuePreview":""},".env.example":{"present":false,"isSet":false,"valuePreview":""},".env.production":{"present":false,"isSet":false,"valuePreview":""}}}]};
+
+    document.getElementById('scanInfo').innerText = 'Scanned: ' + new Date(reportData.scannedAt).toLocaleString() + ' • ' + reportData.projectDir;
+
+    // Status Badge
+    const badgeEl = document.getElementById('statusBadge');
+    if (reportData.isPassing) {
+      badgeEl.innerHTML = '<span class="badge badge-pass">✓ HEALTHY (' + reportData.healthScore + '%)</span>';
+    } else {
+      badgeEl.innerHTML = '<span class="badge badge-fail">⚠ DRIFT DETECTED (' + reportData.healthScore + '%)</span>';
+    }
+
+    // Stats Grid
+    const s = reportData.summary;
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat-card">
+        <div class="stat-title">Health Score</div>
+        <div class="stat-val" style="color: ${reportData.healthScore >= 80 ? 'var(--success)' : 'var(--danger)'}">${reportData.healthScore}%</div>
+        <div class="stat-meta">${reportData.isPassing ? 'All critical checks pass' : 'Action required'}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Code Variables</div>
+        <div class="stat-val">${s.codeKeysCount}</div>
+        <div class="stat-meta">In ${s.totalFilesScanned} scanned files</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Missing in .env</div>
+        <div class="stat-val" style="color: ${s.missingInEnvCount > 0 ? 'var(--danger)' : 'var(--success)'}">${s.missingInEnvCount}</div>
+        <div class="stat-meta">${s.missingInEnvCount > 0 ? 'Will crash at runtime' : 'None missing'}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Leaked Secrets</div>
+        <div class="stat-val" style="color: ${s.secretsCount > 0 ? 'var(--danger)' : 'var(--success)'}">${s.secretsCount}</div>
+        <div class="stat-meta">${s.criticalSecretsCount} critical security tokens</div>
+      </div>
+    `;
+
+    // Missing Table
+    const missingTbody = document.querySelector('#missingTable tbody');
+    if (reportData.missingInEnv.length === 0) {
+      missingTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--success); padding: 1.5rem;">🎉 Zero missing environment variables in .env!</td></tr>';
+    } else {
+      missingTbody.innerHTML = reportData.missingInEnv.map(m => `
+        <tr>
+          <td><span class="key-badge">${m.key}</span></td>
+          <td><span class="mono" style="color: var(--text-muted)">${m.type}</span></td>
+          <td><span class="mono" style="color: #6ee7b7">${m.defaultPlaceholder}</span></td>
+          <td>
+            <div class="code-box">${m.occurrences.map(o => `${o.file}:${o.line}`).join('\n') || 'Found in code'}</div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Secrets Table
+    const secretsTbody = document.querySelector('#secretsTable tbody');
+    if (reportData.secrets.length === 0) {
+      secretsTbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--success); padding: 1.5rem;">🔒 No leaked secrets or exposed credentials detected.</td></tr>';
+    } else {
+      secretsTbody.innerHTML = reportData.secrets.map(sec => `
+        <tr>
+          <td><span class="mono">${sec.file}</span></td>
+          <td><span class="mono">${sec.line || '-'}</span></td>
+          <td><span class="key-badge">${sec.key}</span></td>
+          <td>${sec.ruleName}</td>
+          <td><span class="badge ${sec.severity === 'CRITICAL' ? 'badge-fail' : 'badge-pass'}">${sec.severity}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    // Matrix Table
+    const matrixHead = document.querySelector('#matrixTable thead');
+    const matrixTbody = document.querySelector('#matrixTable tbody');
+    const envFiles = reportData.envFiles.map(e => e.name);
+
+    matrixHead.innerHTML = `
+      <tr>
+        <th>Variable Key</th>
+        <th>Code AST</th>
+        ${envFiles.map(f => `<th>${f}</th>`).join('')}
+      </tr>
+    `;
+
+    matrixTbody.innerHTML = reportData.matrix.map(row => `
+      <tr>
+        <td><span class="key-badge">${row.key}</span></td>
+        <td>
+          <span class="status-dot ${row.inCode ? 'dot-yes' : 'dot-no'}"></span>
+          <span style="font-size: 0.8rem; margin-left: 6px; color: var(--text-muted)">${row.codeOccurrencesCount}x</span>
+        </td>
+        ${envFiles.map(f => {
+          const p = row.envPresence[f];
+          const has = p && p.present;
+          return `<td><span class="status-dot ${has ? 'dot-yes' : 'dot-no'}"></span> <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 4px;">${has ? (p.isSet ? 'Set' : 'Empty') : 'Missing'}</span></td>`;
+        }).join('')}
+      </tr>
+    `).join('');
+  </script>
+</body>
+</html>
